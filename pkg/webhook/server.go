@@ -204,6 +204,10 @@ func (s *DefaultServer) Start(ctx context.Context) error {
 
 		// Create the certificate watcher and
 		// set the config's GetCertificate on the TLSConfig
+		// 监听证书文件变化，变化后进行同步，使GetCertificate总是拿到的是最新文件
+		// 这样就能保证webhook服务证书变化后，不用重启服务就能用到最新证书
+		// 而k8s Resource Secret又能够自动更新，这样就能够和certWatcher联动起来
+		// 当K8s Resource Secret变更后，这变更就能够实时的同步到webhook里面
 		certWatcher, err := certwatcher.New(certPath, keyPath)
 		if err != nil {
 			return err
@@ -211,6 +215,7 @@ func (s *DefaultServer) Start(ctx context.Context) error {
 		cfg.GetCertificate = certWatcher.GetCertificate
 
 		go func() {
+			// 启动监听
 			if err := certWatcher.Start(ctx); err != nil {
 				log.Error(err, "certificate watcher error")
 			}

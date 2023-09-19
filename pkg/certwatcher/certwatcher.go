@@ -59,10 +59,12 @@ func New(certPath, keyPath string) (*CertWatcher, error) {
 	}
 
 	// Initial read of certificate and key.
+	// 读取证书信息
 	if err := cw.ReadCertificate(); err != nil {
 		return nil, err
 	}
 
+	// 构建监听器，监听证书文件变化
 	cw.watcher, err = fsnotify.NewWatcher()
 	if err != nil {
 		return nil, err
@@ -110,6 +112,7 @@ func (cw *CertWatcher) Start(ctx context.Context) error {
 		}
 	}
 
+	// 监听文件变化事件，并调用ReadCertificate进行同步
 	go cw.Watch()
 
 	log.Info("Starting certificate watcher")
